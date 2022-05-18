@@ -48,7 +48,7 @@ const urlshortner = async (req, res) => {
         }
         let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
         if (findlongurl) {
-            return res.status(201).send({ status: true,message:"Url already exits in DB", data: findlongurl })
+            return res.status(201).send({ status: true, message: "Url already exits in DB", data: findlongurl })
         }
         const result = await urlModel.create(output)
         if (result) {
@@ -66,22 +66,26 @@ const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
 
 const getUrl = async function (req, res) {
-    let code = req.params.urlCode
-    let Url = await GET_ASYNC(`${req.params.urlCode}`)
-    //console.log(Url)
-    if (!Url) {
-        let checkdb = await urlModel.findOne({ urlCode: code });
-        //console.log(checkdb)
-        if (!checkdb) return res.status(404).send({ status: false, message: `No url found with ${code}  code` })
-        await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(checkdb.longUrl))
-        console.log("hello from DB")
-        return res.redirect(checkdb.longUrl)
-        //res.status(301).send({ status: true, msg: "im !url", data: checkdb.longUrl });
+    try {
+        let code = req.params.urlCode
+        let Url = await GET_ASYNC(`${req.params.urlCode}`)
+        //console.log(Url)
+        if (!Url) {
+            let checkdb = await urlModel.findOne({ urlCode: code });
+            //console.log(checkdb)
+            if (!checkdb) return res.status(404).send({ status: false, message: `No url found with ${code}  code` })
+            await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(checkdb.longUrl))
+            console.log("hello from DB")
+            return res.redirect(checkdb.longUrl)
+            //res.status(301).send({ status: true, msg: "im !url", data: checkdb.longUrl });
+        }
+        console.log("hello from redis")
+        return res.redirect(Url)
+        //return res.status(301).send({ status: true, msg: "i am from here", data: Url })
     }
-    console.log("hello from redis")
-    return res.redirect(Url) 
-    //return res.status(301).send({ status: true, msg: "i am from here", data: Url })
-
+    catch (err) {
+        res.status(500).send({ status: false, message: err.message })
+    }
 };
 
 
