@@ -54,11 +54,10 @@ const urlshortner = async (req, res) => {
         if (shorturl) {
             return res.status(200).send({ status: true, data: shorturl })
         }
-        // let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
-        // if (findlongurl) {
-        //     await SET_ASYNC(`${originalUrl}`, JSON.stringify(findlongurl))
-        //     return res.status(201).send({ status: true, data: findlongurl })
-        // }
+        let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
+        if (findlongurl) {
+            return res.status(201).send({ status: true, data: findlongurl })
+        }
         const result = await urlModel.create(output)
         if (result) {
             await SET_ASYNC(`${originalUrl}`, JSON.stringify(output))
@@ -80,7 +79,7 @@ const getUrl = async function (req, res) {
         if (!Url) {
             let checkdb = await urlModel.findOne({ urlCode: code });
             //console.log(checkdb)
-            if (!checkdb) return res.status(404).send({ status: false, message: `No url found with ${code}  code` })
+            if (!checkdb) return res.status(404).send({ status: false, message: `No url found with ${code} code` })
             await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(checkdb.longUrl))
             console.log("hello from DB")
             return res.redirect(checkdb.longUrl)
