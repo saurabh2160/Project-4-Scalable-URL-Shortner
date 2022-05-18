@@ -36,7 +36,7 @@ const fetchLongUrl = async function (req, res) {
     if (!Url) {
         let checkdb = await urlModel.findOne({ urlCode: code });
         //console.log(checkdb)
-        if (!checkdb) return res.status(401).send({ status: false, message: "No url found with that code" })
+        if (!checkdb) return res.status(404).send({ status: false, message: "No url found with that code" })
         await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(checkdb.longUrl))
         console.log("hello from DB")
         return res.redirect(checkdb.longUrl)
