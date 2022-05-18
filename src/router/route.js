@@ -4,8 +4,8 @@ const fetch=require('../cahce/auth')
 const router=express.Router();
 
 router.post("/url/shorten",urlcontrol.urlshortner)
-router.get("/:urlCode",fetch.fetchLongUrl)
-//router.get("/:urlCode",urlcontrol.getUrl)
+//router.get("/:urlCode",fetch.fetchLongUrl)
+router.get("/:urlCode",urlcontrol.getUrl)
 
 
 module.exports = router;

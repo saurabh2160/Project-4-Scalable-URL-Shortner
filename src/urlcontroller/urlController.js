@@ -1,6 +1,25 @@
 const urlModel = require('../modules/urlModel')
+const redis = require("redis");
+const { promisify } = require("util");
+
 const validUrl = require('valid-url')
 const shortid = require('shortid');
+
+//Connect to redis=================================================
+const redisClient = redis.createClient(
+    13633,
+    "redis-13633.c81.us-east-1-2.ec2.cloud.redislabs.com",
+    { no_ready_check: true }
+);
+redisClient.auth("zXGz6mWeXy0mZfKALK3pV15u7seerWf5", function (err) {
+    if (err) throw err;
+});
+
+redisClient.on("connect", async function () {
+    console.log("Connected to Redis..");
+});
+//connection established😮😮😮=================================================
+
 
 
 //=======================================================[CREATE SHORT URL]=============================================================
@@ -41,21 +60,50 @@ const urlshortner = async (req, res) => {
     }
 }
 //======================================================[GET URL API]===========================================================================
-const getUrl = async function (req, res) {
-    try {
-        let code = req.params.urlCode;
+//🛰🛰🛰Redis calls
+const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
+const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
-        const check = await urlModel.findOne({ urlCode: code })
-        // res.writeHead(301, {
-        //     "Location": check.longUrl
-        // });
-        res.status(301).send({status:false,data:check.longUrl})
-        res.end()
+
+const getUrl = async function (req, res) {
+    let code = req.params.urlCode
+    let Url = await GET_ASYNC(`${req.params.urlCode}`)
+    //console.log(Url)
+    if (!Url) {
+        let checkdb = await urlModel.findOne({ urlCode: code });
+        //console.log(checkdb)
+        if (!checkdb) return res.status(404).send({ status: false, message: "No url found with that code" })
+        await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(checkdb.longUrl))
+        console.log("hello from DB")
+        return res.redirect(checkdb.longUrl)
+        //res.status(301).send({ status: true, msg: "im !url", data: checkdb.longUrl });
     }
-    catch (er) {
-        res.status(500).send({ status: false, message: er.message })
-    }
-}
+    console.log("hello from redis")
+    return res.redirect(Url) 
+    //return res.status(301).send({ status: true, msg: "i am from here", data: Url })
+
+};
+
+
+
+
+
+
+// const getUrl = async function (req, res) {
+//     try {
+//         let code = req.params.urlCode;
+
+//         const check = await urlModel.findOne({ urlCode: code })
+//         // res.writeHead(301, {
+//         //     "Location": check.longUrl
+//         // });
+//         res.status(301).send({status:false,data:check.longUrl})
+//         res.end()
+//     }
+//     catch (er) {
+//         res.status(500).send({ status: false, message: er.message })
+//     }
+// }
 
 
 module.exports = { urlshortner, getUrl }
