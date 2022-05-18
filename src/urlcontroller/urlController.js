@@ -29,7 +29,7 @@ const urlshortner = async (req, res) => {
         }
         let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
         if (findlongurl) {
-            return res.status(201).send({ status: true, data: findlongurl })
+            return res.status(201).send({ status: true,message:"Url already exits in DB", data: findlongurl })
         }
         const result = await urlModel.create(output)
         if (result) {
