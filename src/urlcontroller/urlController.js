@@ -52,7 +52,7 @@ const urlshortner = async (req, res) => {
         //redis calls
         let shorturl = await GET_ASYNC(`${originalUrl}`)
         if (shorturl) {
-            return res.status(200).send({ status: true, data: shorturl })
+            return res.status(200).send({ status: true, data: JSON.parse(shorturl) })
         }
         let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
         if (findlongurl) {
