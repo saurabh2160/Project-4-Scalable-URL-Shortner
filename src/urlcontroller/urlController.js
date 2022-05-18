@@ -19,6 +19,9 @@ redisClient.on("connect", async function () {
     console.log("Connected to Redis..");
 });
 //connection established😮😮😮=================================================
+//🛰🛰🛰Redis calls
+const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
+const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
 
 
@@ -46,12 +49,19 @@ const urlshortner = async (req, res) => {
             if (search.urlCode == code) return res.status(400).send({ status: false, message: "urlcode  already exits" })
             if (search.shortUrl == short) return res.status(400).send({ status: false, message: "Shorturl already exits" })
         }
-        let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
-        if (findlongurl) {
-            return res.status(201).send({ status: true, message: "Url already exits in DB", data: findlongurl })
+        //redis calls
+        let shorturl = await GET_ASYNC(`${originalUrl}`)
+        if (shorturl) {
+            return res.status(200).send({ status: true, data: shorturl })
         }
+        // let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
+        // if (findlongurl) {
+        //     await SET_ASYNC(`${originalUrl}`, JSON.stringify(findlongurl))
+        //     return res.status(201).send({ status: true, data: findlongurl })
+        // }
         const result = await urlModel.create(output)
         if (result) {
+            await SET_ASYNC(`${originalUrl}`, JSON.stringify(output))
             res.status(201).send({ status: true, data: output })
         }
     }
@@ -60,9 +70,6 @@ const urlshortner = async (req, res) => {
     }
 }
 //======================================================[GET URL API]===========================================================================
-//🛰🛰🛰Redis calls
-const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
-const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
 
 const getUrl = async function (req, res) {
