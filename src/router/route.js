@@ -1,6 +1,5 @@
 const express=require('express')
 const urlcontrol=require('../urlcontroller/urlController')
-const fetch=require('../cahce/auth')
 const router=express.Router();
 
 router.post("/url/shorten",urlcontrol.urlshortner)

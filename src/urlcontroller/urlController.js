@@ -79,9 +79,9 @@ const getUrl = async function (req, res) {
             let checkdb = await urlModel.findOne({ urlCode: code });
             if (!checkdb) return res.status(404).send({ status: false, message: `No url found with ${code} code` })
             await SET_ASYNC(`${req.params.urlCode}`, checkdb.longUrl)
-            return res.redirect(checkdb.longUrl)
+            return res.redirect(301,checkdb.longUrl)
         }
-        return res.redirect(Url)
+        return res.redirect(301,Url)
     }
     catch (err) {
         res.status(500).send({ status: false, message: err.message })
