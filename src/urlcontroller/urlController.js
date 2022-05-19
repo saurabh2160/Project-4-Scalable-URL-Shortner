@@ -46,13 +46,13 @@ const urlshortner = async (req, res) => {
         let search = await urlModel.findOne({ shortUrl: short, urlCode: code })
         //searching for Urlcode and shorturl in DB
         if (search) {
-            if (search.urlCode == code) return res.status(400).send({ status: false, message: "urlcode  already exits" })
+            if (search.urlCode == code) return res.status(400).send({ status: false, message: "urlcode already exits" })
             if (search.shortUrl == short) return res.status(400).send({ status: false, message: "Shorturl already exits" })
         }
         //redis calls
         let shorturl = await GET_ASYNC(`${originalUrl}`)
         if (shorturl) {
-            return res.status(200).send({ status: true, data: JSON.parse(shorturl) })
+            return res.status(201).send({ status: true, data: JSON.parse(shorturl) })
         }
         let findlongurl = await urlModel.findOne({ longUrl: originalUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
         if (findlongurl) {
@@ -75,19 +75,13 @@ const getUrl = async function (req, res) {
     try {
         let code = req.params.urlCode
         let Url = await GET_ASYNC(`${req.params.urlCode}`)
-        //console.log(Url)
         if (!Url) {
             let checkdb = await urlModel.findOne({ urlCode: code });
-            //console.log(checkdb)
             if (!checkdb) return res.status(404).send({ status: false, message: `No url found with ${code} code` })
-            await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(checkdb.longUrl))
-            console.log("hello from DB")
+            await SET_ASYNC(`${req.params.urlCode}`, checkdb.longUrl)
             return res.redirect(checkdb.longUrl)
-            //res.status(301).send({ status: true, msg: "im !url", data: checkdb.longUrl });
         }
-        console.log("hello from redis")
         return res.redirect(Url)
-        //return res.status(301).send({ status: true, msg: "i am from here", data: Url })
     }
     catch (err) {
         res.status(500).send({ status: false, message: err.message })
