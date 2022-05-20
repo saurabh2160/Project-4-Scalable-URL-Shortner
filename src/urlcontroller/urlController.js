@@ -2,7 +2,8 @@ const urlModel = require('../modules/urlModel')
 const redis = require("redis");
 const { promisify } = require("util");
 
-const validUrl = require('valid-url')
+//const validUrl = require('valid-url')
+const{validURL}=require('../util/validation')
 const shortid = require('shortid');
 
 //Connect to redis=================================================
@@ -34,7 +35,7 @@ const urlshortner = async (req, res) => {
         if (Object.keys(inurl).length == 0) return res.status(400).send({ status: false, message: "Enter url in body" })
 
         //validating url
-        if (!validUrl.isUri(longUrl)) return res.status(400).send({ status: false, message: "Enter a valid url" })
+        if (!validURL(longUrl)) return res.status(400).send({ status: false, message: "Enter a valid url" })
         //creating short url
         let code = shortid.generate().toLowerCase()
         let short = "http://localhost:3000/" + code
@@ -79,9 +80,9 @@ const getUrl = async function (req, res) {
             let checkdb = await urlModel.findOne({ urlCode: code });
             if (!checkdb) return res.status(404).send({ status: false, message: `No url found with ${code} code` })
             await SET_ASYNC(`${req.params.urlCode}`, checkdb.longUrl)
-            return res.redirect(301,checkdb.longUrl)
+            return res.redirect(checkdb.longUrl)
         }
-        return res.redirect(301,Url)
+        return res.redirect(Url)
     }
     catch (err) {
         res.status(500).send({ status: false, message: err.message })
