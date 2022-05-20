@@ -29,17 +29,17 @@ const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 const urlshortner = async (req, res) => {
     try {
         let inurl = req.body
-        let { baseUrl } = inurl
+        let { longUrl } = inurl
         //checking for empty body
         if (Object.keys(inurl).length == 0) return res.status(400).send({ status: false, message: "Enter url in body" })
 
         //validating url
-        if (!validUrl.isUri(baseUrl)) return res.status(400).send({ status: false, message: "Enter a valid url" })
+        if (!validUrl.isUri(longUrl)) return res.status(400).send({ status: false, message: "Enter a valid url" })
         //creating short url
         let code = shortid.generate().toLowerCase()
         let short = "http://localhost:3000/" + code
         let output = {
-            longUrl: baseUrl,
+            longUrl: longUrl,
             shortUrl: short,
             urlCode: code
         }
@@ -50,17 +50,17 @@ const urlshortner = async (req, res) => {
             if (search.shortUrl == short) return res.status(400).send({ status: false, message: "Shorturl already exits" })
         }
         //redis calls
-        let shorturl = await GET_ASYNC(`${baseUrl}`)
+        let shorturl = await GET_ASYNC(`${longUrl}`)
         if (shorturl) {
             return res.status(201).send({ status: true, data: JSON.parse(shorturl) })
         }
-        let findlongurl = await urlModel.findOne({ longUrl: baseUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
+        let findlongurl = await urlModel.findOne({ longUrl: longUrl }).select({ __v: 0, _id: 0, createdAt: 0, updatedAt: 0 })
         if (findlongurl) {
             return res.status(201).send({ status: true, data: findlongurl })
         }
         const result = await urlModel.create(output)
         if (result) {
-            await SET_ASYNC(`${baseUrl}`, JSON.stringify(output))
+            await SET_ASYNC(`${longUrl}`, JSON.stringify(output))
             res.status(201).send({ status: true, data: output })
         }
     }
